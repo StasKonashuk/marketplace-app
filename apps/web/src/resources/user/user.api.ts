@@ -1,7 +1,5 @@
 import { useQuery } from 'react-query';
-
-import { User } from 'types';
-
+import { Product, User } from 'types';
 import { apiService } from 'services';
 
 export function useList<T>(params: T) {
@@ -14,4 +12,16 @@ export function useList<T>(params: T) {
   }
 
   return useQuery<UserListResponse>(['users', params], list);
+}
+
+export function useGetProducts<T>(id: string, params: T) {
+  const userProducts = () => apiService.get(`/users/${id}/products`, params);
+
+  interface UserProductsResponse {
+    count: number;
+    items: Product[];
+    totalPages: number;
+  }
+
+  return useQuery<UserProductsResponse>(['user-products', params], userProducts);
 }

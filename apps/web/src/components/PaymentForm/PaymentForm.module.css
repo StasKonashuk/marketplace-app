@@ -1,0 +1,11 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 500px;
+}
+
+.paymentElementsWrapper {
+  display: flex;
+  flex-direction: column;
+}

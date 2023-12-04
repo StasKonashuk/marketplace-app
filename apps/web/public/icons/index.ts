@@ -1,1 +1,13 @@
 export { default as GoogleIcon } from './google.svg';
+export { default as CheckIcon } from './check.svg';
+export { default as LogoutIcon } from './logout.svg';
+export { default as CartIcon } from './cart.svg';
+export { default as CloseIcon } from './close.svg';
+export { default as SearchIcon } from './search.svg';
+export { default as RemoveTagIcon } from './remove-tag.svg';
+export { default as OrderIcon } from './order.svg';
+export { default as ArrowIcon } from './arrow.svg';
+export { default as RemoveIcon } from './remove.svg';
+export { default as PlusIcon } from './plus.svg';
+export { default as MinusIcon } from './minus.svg';
+export { default as GrayPlusIcon } from './grey-plus.svg';

@@ -1,201 +1,350 @@
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { NextPage } from 'next';
 import {
-  Select,
-  TextInput,
   Group,
-  Title,
   Stack,
   Skeleton,
   Text,
   Container,
   UnstyledButton,
   Flex,
+  NumberInput,
+  Chip,
+  Center,
+  Pagination,
 } from '@mantine/core';
 import { useDebouncedValue, useInputState } from '@mantine/hooks';
-import { IconSearch, IconX, IconSelector } from '@tabler/icons-react';
-import { RowSelectionState, SortingState } from '@tanstack/react-table';
-import { DatePickerInput, DatesRangeValue } from '@mantine/dates';
-
-import { userApi } from 'resources/user';
-
-import { Table } from 'components';
-
-import { PER_PAGE, columns, selectOptions } from './constants';
+import cx from 'clsx';
+import { productApi } from 'resources/product';
+import { userProductApi } from 'resources/user-product';
+import { Input, ProductCard } from 'components';
+import { ArrowIcon, CloseIcon, OrderIcon, RemoveTagIcon } from 'public/icons';
+import { OrderByValues, PER_PAGE } from './constants';
 
 import classes from './index.module.css';
 
-interface UsersListParams {
+interface QueryParams {
+  orderBy?: OrderByValues;
+  filter?: ProductsFilter;
   page?: number;
-  perPage?: number;
-  searchValue?: string;
-  sort?: {
-    createdOn: 'asc' | 'desc';
-  };
-  filter?: {
-    createdOn?: {
-      sinceDate: Date | null;
-      dueDate: Date | null;
-    };
+  search?: string;
+}
+
+interface ProductsFilter {
+  price: {
+    from: number;
+    to: number;
   };
 }
 
-const Home: NextPage = () => {
-  const [search, setSearch] = useInputState('');
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [sortBy, setSortBy] = useState(selectOptions[0].value);
-  const [filterDate, setFilterDate] = useState<DatesRangeValue>();
+interface UserProductBody {
+  productId: string;
+  quantity: number;
+}
 
-  const [params, setParams] = useState<UsersListParams>({});
+const Home: NextPage = () => {
+  const router = useRouter();
+
+  const queryObj = router.query as QueryParams;
+
+  const defaultSortValue = queryObj.filter
+    ? JSON.parse(queryObj.filter as unknown as string)
+    : { price: { from: 0, to: 0 } };
+
+  const defaultPageValue = queryObj.page ? Number(queryObj.page) : 1;
+
+  const defaultOrderByValue = queryObj.orderBy || OrderByValues.DESC;
+
+  const [search, setSearch] = useInputState('');
+  const [filterValue, setFilterValue] = useState<ProductsFilter>(defaultSortValue);
+  const [orderBy, setOrderBy] = useState<OrderByValues>(defaultOrderByValue);
+  const [page, setPage] = useState(defaultPageValue);
 
   const [debouncedSearch] = useDebouncedValue(search, 500);
 
-  const handleSort = useCallback((value: string) => {
-    setSortBy(value);
-    setParams((prev) => ({
-      ...prev,
-      sort: value === 'newest' ? { createdOn: 'desc' } : { createdOn: 'asc' },
-    }));
-  }, []);
-
-  const handleFilter = useCallback(([sinceDate, dueDate]: DatesRangeValue) => {
-    setFilterDate([sinceDate, dueDate]);
-
-    if (!sinceDate) {
-      setParams((prev) => ({
-        ...prev,
-        filter: {},
-      }));
-    }
-
-    if (dueDate) {
-      setParams((prev) => ({
-        ...prev,
-        filter: { createdOn: { sinceDate, dueDate } },
-      }));
-    }
-  }, []);
-
   useLayoutEffect(() => {
-    setParams((prev) => ({ ...prev, page: 1, searchValue: debouncedSearch, perPage: PER_PAGE }));
+    setPage(1);
   }, [debouncedSearch]);
 
-  const { data, isLoading: isListLoading } = userApi.useList(params);
+  const { mutate: addProductToCart } = userProductApi.useAddUserProduct<UserProductBody>();
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams();
+
+    queryParams.set('page', String(page));
+
+    queryParams.set('orderBy', orderBy);
+
+    if (filterValue.price.from !== 0 && filterValue.price.to !== 0) {
+      queryParams.set('sort', JSON.stringify(filterValue));
+    } else {
+      queryParams.delete('sort');
+    }
+
+    if (debouncedSearch) {
+      queryParams.set('search', debouncedSearch);
+    } else {
+      queryParams.delete('search');
+    }
+
+    const queryString = queryParams.toString();
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: queryString,
+      },
+      undefined,
+      { scroll: false, shallow: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, orderBy, filterValue, debouncedSearch]);
+
+  const params = useMemo(
+    () => ({
+      page,
+      perPage: PER_PAGE,
+      orderBy,
+      filter: filterValue,
+      searchValue: debouncedSearch,
+    }),
+    [page, orderBy, filterValue, debouncedSearch],
+  );
+
+  const { data, isLoading: isListLoading } = productApi.useList(params);
+  const { data: userProductsData } = userProductApi.useList({});
+
+  const fromPriceComponent = (
+    <Text c="#A3A3A3" fw={500} size="14px" pl="12px" mr="4px">
+      From:
+    </Text>
+  );
+
+  const toPriceComponent = (
+    <Text c="#A3A3A3" fw={500} size="14px" mr="4px" pl="12px">
+      To:
+    </Text>
+  );
+
+  const onFromPriceChangeHandler = (value: string | number) => {
+    setFilterValue((prev) => ({
+      ...prev,
+      price: {
+        ...prev.price,
+        from: Number(value),
+      },
+    }));
+  };
+
+  const onToPriceChangeHandler = (value: string | number) => {
+    setFilterValue((prev) => ({
+      ...prev,
+      price: {
+        ...prev.price,
+        to: Number(value),
+      },
+    }));
+  };
+
+  const resetPriceFilter = () => {
+    setFilterValue((prev) => ({
+      ...prev,
+      price: {
+        from: 0,
+        to: 0,
+      },
+    }));
+  };
+
+  const showPriceFilter = useMemo(
+    () => filterValue.price.from !== 0 && filterValue.price.to !== 0,
+    [filterValue.price],
+  );
+
+  const onChangeOrderHanlder = () => {
+    setOrderBy((prevState) => {
+      if (prevState === OrderByValues.ASC) return OrderByValues.DESC;
+      return OrderByValues.ASC;
+    });
+  };
+
+  const addProductHandler = (id: string) => {
+    addProductToCart({
+      productId: id,
+      quantity: 1,
+    });
+  };
+
+  const product = data?.items.map((p) => (
+    <ProductCard
+      key={p._id}
+      product={p}
+      addToCartHandler={addProductHandler}
+      addedInCart={userProductsData?.some((userProduct) => userProduct.productData._id === p._id)}
+    />
+  ));
+
+  const onChangePageHandler = (value: number) => {
+    setPage(value);
+  };
+
+  const totalPagesCount = useMemo(
+    () => (data?.count ? Math.ceil(data.count / PER_PAGE) : 0),
+    [data],
+  );
 
   return (
     <>
       <Head>
         <title>Home</title>
       </Head>
-      <Stack gap="lg">
-        <Title order={2}>Users</Title>
-
-        <Group wrap="nowrap" justify="space-between">
-          <Group wrap="nowrap">
-            <Skeleton
-              className={classes.inputSkeleton}
-              height={42}
-              radius="sm"
-              visible={isListLoading}
-              width="auto"
-            >
-              <TextInput
-                w={350}
-                size="md"
-                value={search}
-                onChange={setSearch}
-                placeholder="Search by name or email"
-                leftSection={<IconSearch size={16} />}
-                rightSection={search ? (
-                  <UnstyledButton
-                    component={Flex}
-                    display="flex"
-                    align="center"
-                    onClick={() => setSearch('')}
-                  >
-                    <IconX color="gray" />
-                  </UnstyledButton>
-                ) : null}
-              />
-            </Skeleton>
-
-            <Skeleton
-              width="auto"
-              height={42}
-              radius="sm"
-              visible={isListLoading}
-            >
-              <Select
-                w={200}
-                size="md"
-                data={selectOptions}
-                value={sortBy}
-                onChange={handleSort}
-                rightSection={<IconSelector size={16} />}
-                comboboxProps={{
-                  withinPortal: false,
-                  transitionProps: {
-                    transition: 'pop-bottom-right',
-                    duration: 210,
-                    timingFunction: 'ease-out',
-                  },
-                }}
-              />
-            </Skeleton>
-
-            <Skeleton
-              className={classes.datePickerSkeleton}
-              height={42}
-              radius="sm"
-              visible={isListLoading}
-              width="auto"
-            >
-              <DatePickerInput
-                type="range"
-                size="md"
-                placeholder="Pick date"
-                value={filterDate}
-                onChange={handleFilter}
-              />
-            </Skeleton>
-          </Group>
-        </Group>
-
-        {isListLoading && (
-          <>
-            {[1, 2, 3].map((item) => (
-              <Skeleton
-                key={`sklton-${String(item)}`}
-                height={50}
-                radius="sm"
-                mb="sm"
-              />
-            ))}
-          </>
-        )}
-
-        {data?.items.length ? (
-          <Table
-            columns={columns}
-            data={data.items}
-            dataCount={data.count}
-            rowSelection={rowSelection}
-            setRowSelection={setRowSelection}
-            sorting={sorting}
-            onSortingChange={setSorting}
-            onPageChange={setParams}
-            perPage={PER_PAGE}
-          />
-        ) : (
-          <Container p={75}>
-            <Text size="xl" c="gray">
-              No results found, try to adjust your search.
-            </Text>
-          </Container>
-        )}
-      </Stack>
+      <Flex gap="32px" wrap="nowrap">
+        <Skeleton height="163px" radius="sm" visible={isListLoading} w="315px">
+          <Stack p={20} gap={32} bg="#fff" w="315px" h="163px" className={classes.filterWrapper}>
+            <Group justify="space-between">
+              <Text c="#201F22" size="20px" fw={700}>
+                Filters
+              </Text>
+              <UnstyledButton className={classes.resetFilterButton} onClick={resetPriceFilter}>
+                <Text c="#A3A3A3" size="14px" fw={500}>
+                  Reset All
+                </Text>
+                <CloseIcon />
+              </UnstyledButton>
+            </Group>
+            <Stack gap={12}>
+              <Text size="16px" fw={700} c="#201F22">
+                Price
+              </Text>
+              <Group gap={12} wrap="nowrap">
+                <NumberInput
+                  allowDecimal={false}
+                  allowNegative={false}
+                  hideControls
+                  onChange={onFromPriceChangeHandler}
+                  leftSectionWidth="50px"
+                  leftSection={fromPriceComponent}
+                  value={filterValue.price.from}
+                  w="132px"
+                  suffix="$"
+                />
+                <NumberInput
+                  allowDecimal={false}
+                  allowNegative={false}
+                  hideControls
+                  w="132px"
+                  leftSectionWidth="36px"
+                  leftSection={toPriceComponent}
+                  value={filterValue.price.to}
+                  onChange={onToPriceChangeHandler}
+                  suffix="$"
+                />
+              </Group>
+            </Stack>
+          </Stack>
+        </Skeleton>
+        <Stack w="100%" gap="20px">
+          <Skeleton
+            className={classes.inputSkeleton}
+            height="42px"
+            radius="sm"
+            visible={isListLoading}
+            width="auto"
+          >
+            <Input
+              w="100%"
+              size="48px"
+              value={search}
+              onChange={setSearch}
+              placeholder="Type to search..."
+              type="search"
+            />
+          </Skeleton>
+          <Skeleton
+            className={classes.inputSkeleton}
+            mih="21px"
+            radius="sm"
+            visible={isListLoading}
+            width="auto"
+          >
+            <Stack gap="12px">
+              <Group justify="space-between">
+                <Text size="16px" fw={700}>
+                  {data?.count}
+                  {' '}
+                  results
+                </Text>
+                <UnstyledButton onClick={onChangeOrderHanlder} className={cx(classes.orderButton)}>
+                  <Group gap="6px">
+                    <OrderIcon />
+                    <Text size="14px" fw={500}>
+                      {orderBy === OrderByValues.ASC ? 'Sort by oldest' : 'Sort by newest'}
+                    </Text>
+                    <Center
+                      className={cx(classes.arrowIcon, {
+                        [classes.rotate]: orderBy === OrderByValues.ASC,
+                      })}
+                    >
+                      <ArrowIcon />
+                    </Center>
+                  </Group>
+                </UnstyledButton>
+              </Group>
+              {showPriceFilter && (
+                <Group>
+                  <Chip checked={false} color="#fff" variant="outlined">
+                    <Text c="#201F22" size="14px" fw={500}>
+                      $
+                      {filterValue.price.from}
+                      -$
+                      {filterValue.price.to}
+                    </Text>
+                    <UnstyledButton onClick={resetPriceFilter} className={classes.chipRemoveButton}>
+                      <RemoveTagIcon />
+                    </UnstyledButton>
+                  </Chip>
+                </Group>
+              )}
+            </Stack>
+          </Skeleton>
+          {isListLoading && (
+            <Group gap="20px">
+              {[1, 2, 3, 4, 5].map((item) => (
+                <Skeleton
+                  key={`sklton-${String(item)}`}
+                  height="375px"
+                  width="320px"
+                  radius="12px"
+                  mb="sm"
+                />
+              ))}
+            </Group>
+          )}
+          {data?.items.length ? (
+            <>
+              <Group gap="20px" w="100%">
+                {product}
+              </Group>
+              <Flex justify="center">
+                <Pagination
+                  mt="31px"
+                  value={page}
+                  onChange={onChangePageHandler}
+                  total={totalPagesCount}
+                />
+              </Flex>
+            </>
+          ) : (
+            <Container p={75}>
+              <Text size="xl" c="gray">
+                No results found, try to adjust your search.
+              </Text>
+            </Container>
+          )}
+        </Stack>
+      </Flex>
     </>
   );
 };

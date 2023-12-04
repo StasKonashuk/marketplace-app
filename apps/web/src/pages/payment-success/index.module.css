@@ -1,0 +1,5 @@
+.successWindow {
+  border-radius: 20px;
+  background: var(--mantine-color-white);
+  min-width: 480px;
+}

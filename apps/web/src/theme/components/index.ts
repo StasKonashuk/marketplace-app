@@ -3,3 +3,8 @@ export { default as Image } from './Image';
 export { default as PasswordInput } from './PasswordInput';
 export { default as Select } from './Select';
 export { default as TextInput } from './TextInput';
+export { default as Tabs } from './Tabs';
+export { default as Indicator } from './Indicator';
+export { default as NumberInput } from './NumberInput';
+export { default as Chip } from './Chip';
+export { default as Pagination } from './Pagination';

@@ -8,12 +8,9 @@ export default PasswordInput.extend({
     size: 'lg',
   },
   classNames: (_, props) => ({
-    innerInput: cx(classes.innerInput, {
-      [classes.innerInputError]: props.error,
-    }),
-    label: classes.label,
-    input: cx({
+    input: cx(classes.input, {
       [classes.inputError]: props.error,
     }),
+    label: classes.label,
   }),
 });

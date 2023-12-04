@@ -1,0 +1,29 @@
+.productCard {
+  border-radius: 12px;
+  border: 1.126px solid #ececee;
+  background: var(--mantine-color-white);
+  overflow: hidden;
+}
+
+.removeButton {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.badge {
+  position: absolute;
+  right: 16px;
+  bottom: 108px;
+  text-transform: none;
+  height: 25px;
+}

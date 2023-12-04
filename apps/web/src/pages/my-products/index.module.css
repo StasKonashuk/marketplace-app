@@ -1,0 +1,23 @@
+.addProductButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 271px;
+  min-height: 266px;
+  padding-bottom: 16px;
+  gap: 16px;
+  border-radius: 12px;
+  border: var(--main-border);
+  background: var(--mantine-color-white);
+}
+
+.plusIcon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 32px;
+  background: var(--button-primary-bg);
+}

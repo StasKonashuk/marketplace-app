@@ -1,9 +1,6 @@
 import { z } from 'zod';
-
 import { AppKoaContext, AppRouter } from 'types';
-
 import { userService } from 'resources/user';
-
 import { validateMiddleware } from 'middlewares';
 
 const schema = z.object({
@@ -36,8 +33,6 @@ async function handler(ctx: AppKoaContext<ValidatedData>) {
       $and: [
         {
           $or: [
-            { firstName: { $regex: regExp } },
-            { lastName: { $regex: regExp } },
             { email: { $regex: regExp } },
             { createdOn: {} },
           ],

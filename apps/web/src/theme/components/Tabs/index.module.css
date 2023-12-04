@@ -1,0 +1,37 @@
+.tab {
+  position: relative;
+  display: flex;
+  width: 139px;
+  height: 40px;
+  padding: 2px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  border-color: #ececee;
+  border-bottom: none;
+  border-radius: 20px;
+  color: #a3a3a3;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px; /* 150% */
+
+  &:hover {
+    border-radius: 20px;
+    background: var(--mantine-color-white);
+  }
+
+  &[data-active] {
+    z-index: 1;
+    background: #ececee;
+    color: #201f22;
+  }
+}
+
+.list {
+  display: flex;
+  gap: 32px;
+  &::before {
+    display: none;
+  }
+}

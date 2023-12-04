@@ -1,0 +1,44 @@
+.removeBtn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  color: #767676;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 20px; /* 125% */
+}
+
+.tableHeaderRow {
+  border-bottom: none;
+}
+
+.cartLink {
+  color: #a3a3a3;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.active {
+  color: #201f22 !important;
+}
+
+.summaryWrapper {
+  display: flex;
+  width: 315px;
+  padding: 20px;
+  align-items: flex-start;
+  gap: 32px;
+  border-radius: 12px;
+  border: 1px solid #ececee;
+  background: #fff;
+}
+
+.quantityBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

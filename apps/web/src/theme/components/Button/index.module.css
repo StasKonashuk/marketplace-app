@@ -1,3 +1,8 @@
 .label {
+  text-align: center;
+  font-size: 14px;
+  font-style: normal;
   font-weight: 500;
+  line-height: 21px; /* 150% */
+  transition: all 0.1s ease-in-out;
 }

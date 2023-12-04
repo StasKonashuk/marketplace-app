@@ -1,7 +1,41 @@
 .inputSkeleton {
-  flex-grow: 0.25
+  flex-grow: 0.25;
 }
 
 .datePickerSkeleton {
   overflow: unset;
+}
+
+.filterWrapper {
+  border-radius: 12px;
+  border: var(--main-border);
+  background: var(--mantine-color-white);
+}
+
+.resetFilterButton {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
+}
+
+.chipRemoveButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orderButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arrowIcon {
+  transition: all 0.2 ease;
+}
+
+.rotate {
+  transform: rotate(180deg);
+  transition: all 0.2 ease;
 }

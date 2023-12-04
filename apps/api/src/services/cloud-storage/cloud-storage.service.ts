@@ -1,107 +1,56 @@
-import { S3Client, GetObjectCommand, CopyObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { Upload } from '@aws-sdk/lib-storage';
-
+/* eslint-disable import/no-extraneous-dependencies */
+import { initializeApp } from 'firebase/app';
+import {
+  getStorage,
+  ref,
+  getDownloadURL,
+  uploadBytesResumable,
+} from 'firebase/storage';
 import type { File } from '@koa/multer';
-import type {
-  GetObjectOutput,
-  CopyObjectOutput,
-  DeleteObjectOutput,
-  CompleteMultipartUploadOutput,
-} from '@aws-sdk/client-s3';
-
 import config from 'config';
-
 import * as helpers from './cloud-storage.helper';
 
-const client = new S3Client({
-  forcePathStyle: false, // Configures to use subdomain/virtual calling format.
-  region: 'us-east-1', // To successfully create a new bucket, this SDK requires the region to be us-east-1
-  endpoint: config.CLOUD_STORAGE_ENDPOINT,
-  credentials: {
-    accessKeyId: config.CLOUD_STORAGE_ACCESS_KEY_ID ?? '',
-    secretAccessKey: config.CLOUD_STORAGE_SECRET_ACCESS_KEY ?? '',
-  },
-});
-const Bucket = config.CLOUD_STORAGE_BUCKET;
+// Import the functions you need from the SDKs you need
 
-const upload = (fileName: string, file: File): Promise<CompleteMultipartUploadOutput> => {
-  const params = {
-    Bucket,
-    ContentType: file.mimetype,
-    Body: file.buffer,
-    Key: fileName,
-    ACL: 'private',
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: config.FIREBASE_API_KEY,
+  authDomain: config.FIREBASE_AUTH_DOMAIN,
+  projectId: config.FIREBASE_PROJECT_ID,
+  storageBucket: config.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: config.FIREBASE_MESSAGING_SENDER_ID,
+  appId: config.FIREBASE_APP_ID,
+};
+
+// Initialize Firebase
+initializeApp(firebaseConfig);
+
+// Initialize Cloud Storage and get a reference to the service
+const storage = getStorage();
+
+const upload = async (fileName: string, file: File): Promise<string> => {
+  const storageRef = ref(storage, fileName);
+
+  const metadata = {
+    contentType: file.mimetype,
   };
 
-  const multipartUpload = new Upload({
-    client,
-    params,
-  });
+  const snapshot = await uploadBytesResumable(
+    storageRef,
+    file.buffer,
+    metadata,
+  );
 
-  return multipartUpload.done();
-};
+  const downloadURL = await getDownloadURL(snapshot.ref);
 
-const uploadPublic = (fileName: string, file: File): Promise<CompleteMultipartUploadOutput> => {
-  const params = {
-    Bucket,
-    ContentType: file.mimetype,
-    Body: file.buffer,
-    Key: fileName,
-    ACL: 'public-read',
-  };
-
-  const multipartUpload = new Upload({
-    client,
-    params,
-  });
-
-  return multipartUpload.done();
-};
-
-const getSignedDownloadUrl = (fileName: string): Promise<string> => {
-  const command = new GetObjectCommand({
-    Bucket,
-    Key: fileName,
-  });
-
-  return getSignedUrl(client, command, { expiresIn: 1800 });
-};
-
-const getObject = (fileName: string): Promise<GetObjectOutput> => {
-  const command = new GetObjectCommand({
-    Bucket,
-    Key: fileName,
-  });
-
-  return client.send(command);
-};
-
-const copyObject = (filePath: string, copyFilePath: string): Promise<CopyObjectOutput> => {
-  const command = new CopyObjectCommand({
-    Bucket,
-    CopySource: encodeURI(`${Bucket}/${copyFilePath}`),
-    Key: filePath,
-  });
-
-  return client.send(command);
-};
-
-const deleteObject = (fileName: string): Promise<DeleteObjectOutput> => {
-  const command = new DeleteObjectCommand( {
-    Bucket,
-    Key: fileName,
-  });
-
-  return client.send(command);
+  return downloadURL;
 };
 
 export default {
   helpers,
   upload,
-  uploadPublic,
-  getObject,
-  copyObject,
-  deleteObject,
-  getSignedDownloadUrl,
 };

@@ -1,5 +1,4 @@
 import { FC, ReactElement } from 'react';
-
 import { SimpleGrid, Image, Center } from '@mantine/core';
 
 interface UnauthorizedLayoutProps {
@@ -9,18 +8,20 @@ interface UnauthorizedLayoutProps {
 const UnauthorizedLayout: FC<UnauthorizedLayoutProps> = ({ children }) => (
   <SimpleGrid
     cols={{ base: 1, sm: 2 }}
-    spacing="sm"
+    spacing="0px"
   >
+    <Center w="100%" h="100vh" component="main">
+      {children}
+    </Center>
     <Image
       visibleFrom="sm"
       alt="App Info"
-      src="/images/ship.svg"
+      src="/images/shopy.svg"
       h="100vh"
+      w="auto"
+      fit="contain"
+      p="32px"
     />
-
-    <Center px={32} w="100%" h="100vh" component="main">
-      {children}
-    </Center>
   </SimpleGrid>
 );
 
