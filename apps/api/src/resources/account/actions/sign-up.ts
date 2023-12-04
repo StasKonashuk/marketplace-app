@@ -43,7 +43,7 @@ async function handler(ctx: AppKoaContext<ValidatedData>) {
   await userService.insertOne({
     email,
     passwordHash: hash.toString(),
-    isEmailVerified: false,
+    isEmailVerified: true,
     signupToken,
   });
 
