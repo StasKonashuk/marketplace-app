@@ -2,6 +2,7 @@ services:
   - type: web
     name: init-api
     runtime: docker
+    branch: main
     plan: free
     dockerfilePath: apps/api/Dockerfile
     buildFilter:
@@ -9,6 +10,7 @@ services:
         - apps/api/**
   - type: web
     name: init-web
+    branch: main
     runtime: docker
     plan: free
     dockerfilePath: apps/web/Dockerfile
