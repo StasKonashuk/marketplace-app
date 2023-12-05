@@ -55,15 +55,14 @@ const MyCart: NextPage = () => {
     isLoading: isUpdateUserProductLoading,
   } = userProductApi.useUpdateUserProduct<UserProductBody>();
 
-  const {
-    mutate: removeUserProduct,
+  const { mutate: removeUserProduct,
     isLoading: isRemoveUserProductLoading,
   } = userProductApi.useRemoveUserProduct();
 
   const {
     mutate: createPayment,
     isLoading: isCreatePaymentLoading,
-  } = paymentsApi.useCreatePayment<{ amount: number }>();
+  } = paymentsApi.useCreatePayment<{ userProducts: { price: string; quantity: number }[] }>();
 
   const updateUserProductHandler = (id: string, quantity: number) => {
     updateUserProduct({ id, data: { quantity } });
@@ -115,20 +114,23 @@ const MyCart: NextPage = () => {
   }, [userProductsData]);
 
   const createPaymentHandler = async () => {
-    createPayment(
-      { amount: totalPrice },
-      {
-        onSuccess: (data) => {
-          router.push(
-            {
-              pathname: RoutePath.Payment,
-              query: { clientSecret: data.clientSecret },
-            },
-            RoutePath.Payment,
-          );
+    const userProducts = userProductsData?.map((p) => ({
+      price: p.productData.priceId as string,
+      quantity: p.quantity,
+    }));
+
+    if (userProducts?.length) {
+      createPayment(
+        { userProducts },
+        {
+          onSuccess: (data) => {
+            if (data.sessionUrl) {
+              router.push(data.sessionUrl);
+            }
+          },
         },
-      },
-    );
+      );
+    }
   };
 
   const columns: Column[] = getColumns(historyMode);

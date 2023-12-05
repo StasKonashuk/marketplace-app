@@ -1,9 +1,13 @@
+import Stripe from 'stripe';
 import multer from '@koa/multer';
 import { z } from 'zod';
 import { AppKoaContext, AppRouter, User } from 'types';
 import { productService } from 'resources/product';
 import { validateMiddleware } from 'middlewares';
 import { cloudStorageService } from 'services';
+import config from 'config';
+
+const stripe = new Stripe(config.STRIPE_SECRET_KEY);
 
 const upload = multer();
 
@@ -35,6 +39,19 @@ async function handler(ctx: AppKoaContext<ValidatedData>) {
     price: Number(price),
     imgUrl,
   });
+
+  const stripeProduct = await stripe.products.create({
+    name,
+    images: imgUrl ? [imgUrl] : undefined,
+  });
+
+  const stripePrice = await stripe.prices.create({
+    product: stripeProduct.id,
+    unit_amount: Number(price),
+    currency: 'usd',
+  });
+
+  await productService.updateOne({ _id: product._id }, () => ({ priceId: stripePrice.id }));
 
   ctx.body = product;
 }

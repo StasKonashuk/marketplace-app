@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import Stripe from 'stripe';
 import { z } from 'zod';
 import { AppKoaContext, AppRouter, User } from 'types';
@@ -8,7 +7,10 @@ import config from 'config';
 const stripe = new Stripe(config.STRIPE_SECRET_KEY);
 
 const schema = z.object({
-  amount: z.number(),
+  userProducts: z.array(z.object({
+    price: z.string(),
+    quantity: z.number(),
+  })),
 });
 
 interface ValidatedData extends z.infer<typeof schema> {
@@ -16,17 +18,16 @@ interface ValidatedData extends z.infer<typeof schema> {
 }
 
 async function handler(ctx: AppKoaContext<ValidatedData>) {
-  const { amount } = ctx.validatedData;
+  const { userProducts } = ctx.validatedData;
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    currency: 'usd',
-    amount,
-    automatic_payment_methods: {
-      enabled: true,
-    },
+  const session = await stripe.checkout.sessions.create({
+    line_items: userProducts,
+    mode: 'payment',
+    success_url: `${config.WEB_URL}/payment-success`,
+    cancel_url: `${config.WEB_URL}/payment-failed`,
   });
 
-  ctx.body = { clientSecret: paymentIntent.client_secret };
+  ctx.body = { sessionUrl: session.url };
 }
 
 export default (router: AppRouter) => {

@@ -78,6 +78,9 @@ const MyProducts: NextPage = () => {
       onError: (err) => handleError(err),
       onSuccess: () => {
         setCreateProductMode(false);
+        setFile(null);
+        setPrice(0);
+        reset();
       },
     });
   };
@@ -147,7 +150,7 @@ const MyProducts: NextPage = () => {
                 />
                 <NumberInput
                   label="Price"
-                  allowDecimal={false}
+                  allowDecimal
                   allowNegative={false}
                   hideControls
                   onChange={onChangePriceHandler}
@@ -187,7 +190,7 @@ const MyProducts: NextPage = () => {
             )}
 
             {!isProductsLoading && (
-              <Group gap="20px" wrap="wrap">
+              <Group gap="20px" wrap="wrap" align="flex-start">
                 <UnstyledButton className={classes.addProductButton} onClick={addNewProductHandler}>
                   <Stack className={classes.plusIcon}>
                     <PlusIcon />

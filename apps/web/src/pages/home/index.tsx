@@ -61,6 +61,34 @@ const Home: NextPage = () => {
   const [filterValue, setFilterValue] = useState<ProductsFilter>(defaultSortValue);
   const [orderBy, setOrderBy] = useState<OrderByValues>(defaultOrderByValue);
   const [page, setPage] = useState(defaultPageValue);
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  });
+  const [perPage, setPerPage] = useState(PER_PAGE);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (windowSize.width > 1440) {
+      setPerPage(8);
+    } else {
+      setPerPage(PER_PAGE);
+    }
+  }, [windowSize]);
 
   const [debouncedSearch] = useDebouncedValue(search, 500);
 
@@ -105,12 +133,12 @@ const Home: NextPage = () => {
   const params = useMemo(
     () => ({
       page,
-      perPage: PER_PAGE,
+      perPage,
       orderBy,
       filter: filterValue,
       searchValue: debouncedSearch,
     }),
-    [page, orderBy, filterValue, debouncedSearch],
+    [page, orderBy, filterValue, debouncedSearch, perPage],
   );
 
   const { data, isLoading: isListLoading } = productApi.useList(params);
@@ -179,6 +207,7 @@ const Home: NextPage = () => {
 
   const product = data?.items.map((p) => (
     <ProductCard
+      width="318px"
       key={p._id}
       product={p}
       addToCartHandler={addProductHandler}

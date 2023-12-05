@@ -23,7 +23,7 @@ const Table: FC<TableProps> = ({ columns, headerRowClass, rowsData }) => {
   const headerColumns = columns.map((c) => (
     <MantineTable.Th miw={c.minWidth} p={c.padding}>
       {c.title && (
-        <Text size="16px" c="#767676" fw={400}>
+        <Text size="16px" c="#767676" fw={400} ta="right">
           {c.title}
         </Text>
       )}
