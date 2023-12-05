@@ -39,28 +39,15 @@ interface ProductsFilter {
   };
 }
 
-interface UserProductBody {
-  productId: string;
-  quantity: number;
-}
-
 const Home: NextPage = () => {
   const router = useRouter();
 
   const queryObj = router.query as QueryParams;
 
-  const defaultSortValue = queryObj.filter
-    ? JSON.parse(queryObj.filter as unknown as string)
-    : { price: { from: 0, to: 0 } };
-
-  const defaultPageValue = queryObj.page ? Number(queryObj.page) : 1;
-
-  const defaultOrderByValue = queryObj.orderBy || OrderByValues.DESC;
-
   const [search, setSearch] = useInputState('');
-  const [filterValue, setFilterValue] = useState<ProductsFilter>(defaultSortValue);
-  const [orderBy, setOrderBy] = useState<OrderByValues>(defaultOrderByValue);
-  const [page, setPage] = useState(defaultPageValue);
+  const [filterValue, setFilterValue] = useState<ProductsFilter>({ price: { from: 0, to: 0 } });
+  const [orderBy, setOrderBy] = useState<OrderByValues>(OrderByValues.DESC);
+  const [page, setPage] = useState(1);
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
@@ -68,6 +55,22 @@ const Home: NextPage = () => {
   const [perPage, setPerPage] = useState(PER_PAGE);
 
   useEffect(() => {
+    if (queryObj.search) {
+      setSearch(queryObj.search);
+    }
+
+    if (queryObj.filter) {
+      setFilterValue(JSON.parse(queryObj.filter as unknown as string));
+    }
+
+    if (queryObj.page) {
+      setPage(Number(queryObj.page));
+    }
+
+    if (queryObj.orderBy) {
+      setOrderBy(queryObj.orderBy);
+    }
+
     const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
@@ -80,10 +83,13 @@ const Home: NextPage = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (windowSize.width > 1440) {
+    if (windowSize.width > 2100) {
+      setPerPage(10);
+    } else if (windowSize.width > 1440) {
       setPerPage(8);
     } else {
       setPerPage(PER_PAGE);
@@ -96,8 +102,6 @@ const Home: NextPage = () => {
     setPage(1);
   }, [debouncedSearch]);
 
-  const { mutate: addProductToCart } = userProductApi.useAddUserProduct<UserProductBody>();
-
   useEffect(() => {
     const queryParams = new URLSearchParams();
 
@@ -106,9 +110,9 @@ const Home: NextPage = () => {
     queryParams.set('orderBy', orderBy);
 
     if (filterValue.price.from !== 0 && filterValue.price.to !== 0) {
-      queryParams.set('sort', JSON.stringify(filterValue));
+      queryParams.set('filter', JSON.stringify(filterValue));
     } else {
-      queryParams.delete('sort');
+      queryParams.delete('filter');
     }
 
     if (debouncedSearch) {
@@ -198,19 +202,12 @@ const Home: NextPage = () => {
     });
   };
 
-  const addProductHandler = (id: string) => {
-    addProductToCart({
-      productId: id,
-      quantity: 1,
-    });
-  };
-
   const product = data?.items.map((p) => (
     <ProductCard
       width="318px"
       key={p._id}
       product={p}
-      addToCartHandler={addProductHandler}
+      isAddable
       addedInCart={userProductsData?.some((userProduct) => userProduct.productData._id === p._id)}
     />
   ));
@@ -229,7 +226,7 @@ const Home: NextPage = () => {
       <Head>
         <title>Home</title>
       </Head>
-      <Flex gap="32px" wrap="nowrap">
+      <Flex gap="32px" wrap="nowrap" direction={windowSize.width < 500 ? 'column' : 'row'}>
         <Skeleton height="163px" radius="sm" visible={isListLoading} w="315px">
           <Stack p={20} gap={32} bg="#fff" w="315px" h="163px" className={classes.filterWrapper}>
             <Group justify="space-between">
@@ -352,19 +349,9 @@ const Home: NextPage = () => {
             </Group>
           )}
           {data?.items.length ? (
-            <>
-              <Group gap="20px" w="100%">
-                {product}
-              </Group>
-              <Flex justify="center">
-                <Pagination
-                  mt="31px"
-                  value={page}
-                  onChange={onChangePageHandler}
-                  total={totalPagesCount}
-                />
-              </Flex>
-            </>
+            <Group gap="20px" w="100%" mih="768px" align="flex-start">
+              {product}
+            </Group>
           ) : (
             <Container p={75}>
               <Text size="xl" c="gray">
@@ -374,6 +361,16 @@ const Home: NextPage = () => {
           )}
         </Stack>
       </Flex>
+      {data?.items.length && (
+        <Flex justify="center">
+          <Pagination
+            mt="31px"
+            value={page}
+            onChange={onChangePageHandler}
+            total={totalPagesCount}
+          />
+        </Flex>
+      )}
     </>
   );
 };

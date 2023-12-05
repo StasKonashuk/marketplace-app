@@ -6,6 +6,7 @@ export interface Column {
   className?: string;
   minWidth?: string;
   padding?: string;
+  textAlign?:'center' | 'right' | 'left';
 }
 
 interface Row {
@@ -23,7 +24,7 @@ const Table: FC<TableProps> = ({ columns, headerRowClass, rowsData }) => {
   const headerColumns = columns.map((c) => (
     <MantineTable.Th miw={c.minWidth} p={c.padding}>
       {c.title && (
-        <Text size="16px" c="#767676" fw={400} ta="right">
+        <Text size="16px" c="#767676" fw={400} ta={c.textAlign}>
           {c.title}
         </Text>
       )}

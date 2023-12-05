@@ -59,11 +59,6 @@ const MyProducts: NextPage = () => {
     isLoading: isCreateProductLoading,
   } = productApi.useCreateProduct<FormData>();
 
-  const {
-    mutate: removeProduct,
-    isLoading: isRemoveProductLoading,
-  } = productApi.useRemoveProduct();
-
   const onSubmit = async (data: ProductBody) => {
     const body = new FormData();
 
@@ -87,18 +82,13 @@ const MyProducts: NextPage = () => {
 
   const { data, isLoading: isProductsLoading } = userApi.useGetProducts(account._id, {});
 
-  const removeProductHandler = (id: string) => {
-    removeProduct({ id });
-  };
-
   const myProduct = data?.items.map((p) => (
     <ProductCard
       key={p._id}
       imgHeight="174px"
       width="271px"
       product={p}
-      removeLoading={isRemoveProductLoading}
-      removeHandler={removeProductHandler}
+      isRemoveble
     />
   ));
 

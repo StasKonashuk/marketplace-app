@@ -133,7 +133,7 @@ const MyCart: NextPage = () => {
     }
   };
 
-  const columns: Column[] = getColumns(historyMode);
+  const columns = getColumns(historyMode) as Column[];
 
   const rows = userProductsData?.map((userProduct, index) => ({
     _id: userProduct._id,

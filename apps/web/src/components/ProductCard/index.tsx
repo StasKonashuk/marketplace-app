@@ -3,30 +3,57 @@ import { Product } from 'types';
 import { Group, Container, Image, Stack, Text, UnstyledButton, Badge } from '@mantine/core';
 import Button from 'components/Button';
 import { RemoveIcon } from 'public/icons';
+import { userProductApi } from 'resources/user-product';
+import { productApi } from 'resources/product';
 
 import classes from './ProductCard.module.css';
 
 interface ProductCardProps {
-  removeHandler?: (id: string) => void;
-  addToCartHandler?: (id: string) => void;
+  isAddable?: boolean;
+  isRemoveble?: boolean;
   product: Product;
   width?: string;
   imgHeight?: string;
   addedInCart?: boolean;
-  removeLoading?: boolean;
+}
+
+interface UserProductBody {
+  productId: string;
+  quantity: number;
 }
 
 const ProductCard: FC<ProductCardProps> = ({
-  removeHandler,
-  addToCartHandler,
+  isAddable,
   product,
   width = '320px',
   imgHeight = '218px',
   addedInCart,
-  removeLoading = false,
+  isRemoveble,
 }) => {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const { _id, price, imgUrl, name, onSale, isSold, currency } = product;
+
+  const {
+    mutate: addProductToCart,
+    isLoading: addProductLoading,
+  } = userProductApi.useAddUserProduct<UserProductBody>();
+
+  const addProductHandler = (id: string) => {
+    addProductToCart({
+      productId: id,
+      quantity: 1,
+    });
+  };
+
+  const {
+    mutate: removeProduct,
+    isLoading: isRemoveProductLoading,
+  } = productApi.useRemoveProduct();
+
+  const removeProductHandler = (id: string) => {
+    removeProduct({ id });
+  };
+
   return (
     <Container
       key={_id}
@@ -45,11 +72,11 @@ const ProductCard: FC<ProductCardProps> = ({
         h={imgHeight}
         fallbackSrc="https://placehold.co/200x200?text=Placeholder"
       />
-      {removeHandler && (
+      {isRemoveble && (
         <UnstyledButton
-          disabled={removeLoading}
+          disabled={isRemoveProductLoading}
           className={classes.removeButton}
-          onClick={() => removeHandler(_id)}
+          onClick={() => removeProductHandler(_id)}
         >
           <RemoveIcon />
         </UnstyledButton>
@@ -87,8 +114,12 @@ const ProductCard: FC<ProductCardProps> = ({
             </Text>
           </Group>
         </Stack>
-        {addToCartHandler && (
-          <Button disabled={addedInCart} onClick={() => addToCartHandler(_id)}>
+        {isAddable && (
+          <Button
+            loading={addProductLoading}
+            disabled={addedInCart || addProductLoading}
+            onClick={() => addProductHandler(_id)}
+          >
             {addedInCart ? 'This product in your cart' : 'Add to Cart'}
           </Button>
         )}
